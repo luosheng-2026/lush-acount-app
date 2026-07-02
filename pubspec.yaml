@@ -1,0 +1,27 @@
+name: lush_account_app
+description: LUSH记账 - 纯本地个人收支记账APP
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  csv: ^6.0.0
+  excel: ^4.0.6
+  file_picker: ^8.1.2
+  fl_chart: ^0.69.0
+  path: ^1.9.0
+  path_provider: ^2.1.4
+  permission_handler: ^11.3.1
+  sqflite: ^2.3.3+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
