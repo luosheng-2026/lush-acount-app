@@ -1,7 +1,7 @@
 name: lush_account_app
 description: LUSH记账 - 纯本地个人收支记账APP
 publish_to: "none"
-version: 1.0.0+1
+version: 2.0.0+2
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

@@ -20,13 +20,15 @@ class BackupService {
 
   Future<bool> ensureStoragePermission() async {
     if (!Platform.isAndroid) return true;
-    final photos = await Permission.photos.request();
-    final videos = await Permission.videos.request();
     final storage = await Permission.storage.request();
-    return photos.isGranted ||
-        videos.isGranted ||
-        storage.isGranted ||
-        await Permission.manageExternalStorage.isGranted;
+    // Android 10+ allows app-specific export directories and system file pickers
+    // without broad storage access. We still request permission first for older
+    // devices and vendor ROM prompts, then continue with scoped storage fallback.
+    return storage.isGranted ||
+        storage.isDenied ||
+        storage.isPermanentlyDenied ||
+        storage.isRestricted ||
+        storage.isLimited;
   }
 
   Future<Directory> _exportDirectory() async {
@@ -92,35 +94,51 @@ class BackupService {
   }
 
   Future<int?> importJson() async {
-    if (!await ensureStoragePermission()) return null;
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-    );
-    final path = result?.files.single.path;
-    if (path == null) return null;
-    final content = await File(path).readAsString();
-    final data = jsonDecode(content) as Map<String, dynamic>;
-    final billRows = (data['bills'] as List<dynamic>? ?? [])
-        .cast<Map<String, dynamic>>();
-    final bills = <Bill>[];
-    for (final row in billRows) {
-      final categoryId = await _resolveCategoryId(row);
-      if (categoryId == null) continue;
-      bills.add(Bill(
-        money: (row['money'] as num).toDouble(),
-        billType: row['bill_type'] as int,
-        categoryId: categoryId,
-        billTime: DateTime.parse(row['bill_time'] as String),
-        remark: row['remark'] as String?,
-      ));
+    try {
+      if (!await ensureStoragePermission()) return null;
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+      final path = result?.files.single.path;
+      if (path == null) return null;
+      final content = await File(path).readAsString();
+      final data = jsonDecode(content) as Map<String, dynamic>;
+      final rawBills = data['bills'];
+      if (rawBills is! List) return null;
+      final bills = <Bill>[];
+      for (final item in rawBills) {
+        if (item is! Map<String, dynamic>) continue;
+        final bill = await _parseBackupBill(item);
+        if (bill != null) bills.add(bill);
+      }
+      final success = await _db.replaceBills(bills);
+      return success ? bills.length : null;
+    } catch (_) {
+      return null;
     }
-    final success = await _db.replaceBills(bills);
-    return success ? bills.length : null;
   }
 
-  Future<int?> _resolveCategoryId(Map<String, dynamic> row) async {
-    final type = row['bill_type'] as int;
+  Future<Bill?> _parseBackupBill(Map<String, dynamic> row) async {
+    final money = row['money'];
+    final type = row['bill_type'];
+    final billTime = row['bill_time'];
+    if (money is! num || type is! int || billTime is! String) return null;
+    if (money <= 0 || (type != incomeType && type != expenseType)) return null;
+    final categoryId = await _resolveCategoryId(row, type);
+    if (categoryId == null) return null;
+    final parsedTime = DateTime.tryParse(billTime);
+    if (parsedTime == null) return null;
+    return Bill(
+      money: money.toDouble(),
+      billType: type,
+      categoryId: categoryId,
+      billTime: parsedTime,
+      remark: row['remark'] as String?,
+    );
+  }
+
+  Future<int?> _resolveCategoryId(Map<String, dynamic> row, int type) async {
     final parentName = row['parent_category_name'] as String?;
     final childName = row['child_category_name'] as String?;
     if (parentName != null && childName != null) {

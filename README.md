@@ -1,53 +1,64 @@
 # LUSH记账
 
-纯本地个人收支记账 Flutter APP。账单数据只保存在手机本地 SQLite 数据库中，不包含网络请求。
+LUSH记账是一款纯本地、轻量化的个人收支记账 Android APP。项目使用 Flutter 开发，账单数据保存在手机本地 SQLite 数据库中，不上传云端，也不包含任何网络请求。
 
-## 已实现功能
+当前发行版本：`V2.0`
 
-- 快速记账：收入/支出、金额校验、两级分类联动、时间、备注、入库保存
-- 账单列表：今日/本周/本月/自定义时间筛选，按收支类型和一级分类筛选，区间汇总，编辑和删除
-- 分类管理：收入/支出分类分开管理，一级和二级分类增删改，有账单关联时禁止删除
-- 数据统计：累计收入、累计支出、净结余，月度趋势折线图，支出分类饼图
-- 设置：导出 Excel、导出 JSON、导入 JSON 恢复、清空账单二次确认
-- Android：竖屏锁定，深色/浅色模式自适应，存储权限声明
+## 功能范围
 
-## 本地编译 APK
+- 快速记账：收入/支出切换、金额正数校验、两级分类联动、时间选择、备注保存
+- 账单列表：今日、本周、本月、自定义时间筛选，支持按收支类型和一级分类过滤
+- 账单维护：单条账单查看、编辑、删除，删除前二次确认
+- 分类管理：收入/支出分类独立管理，一级分类和二级子类支持新增、修改、删除
+- 数据保护：有关联账单的分类禁止删除，避免历史账单分类异常
+- 数据统计：累计收入、累计支出、历史净结余、月度趋势折线图、支出分类饼图
+- 备份恢复：导出 Excel、导出 JSON、导入 JSON 恢复、清空账单二次确认
+- 系统适配：深色/浅色模式自适应，竖屏锁定，适配 Android 和小米澎湃 OS
 
-当前电脑需要先安装 Flutter 稳定版，并把 `flutter/bin` 加入系统 PATH。
+## 隐私说明
 
-1. 检查环境：
+LUSH记账只在本机存储数据：
+
+- 不注册账号
+- 不上传账单
+- 不接入云同步
+- 不编写网络请求
+- 导出的 Excel/JSON 文件由用户自行保存和管理
+
+## 技术栈
+
+- Flutter / Dart
+- sqflite / SQLite
+- fl_chart
+- path_provider / path
+- excel
+- file_picker
+- permission_handler
+
+## 项目结构
+
+```text
+lib/
+  constants/       默认分类模板
+  data/            SQLite 数据库、备份服务、数据变更通知
+  models/          分类、账单、统计模型
+  screens/         5 个底部 Tab 页面
+  utils/           金额、日期、弹窗等通用工具
+android/           Android 工程与打包配置
+```
+
+## 本地构建
+
+先安装 Flutter 稳定版，并把 `flutter/bin` 加入系统 PATH。
 
 ```powershell
 flutter doctor
-```
-
-2. 如果 Android Gradle wrapper 文件缺失，在本目录执行一次：
-
-```powershell
-flutter create --platforms android .
-```
-
-执行后保留现有 `lib/`、`pubspec.yaml`、`android/app/src/main/AndroidManifest.xml` 等业务文件。
-
-3. 获取依赖：
-
-```powershell
 flutter pub get
-```
-
-4. 静态检查：
-
-```powershell
 flutter analyze
-```
-
-5. 编译 release APK：
-
-```powershell
 flutter build apk --release
 ```
 
-成功后 APK 位于：
+Release APK 输出位置：
 
 ```text
 build/app/outputs/flutter-apk/app-release.apk
@@ -55,12 +66,23 @@ build/app/outputs/flutter-apk/app-release.apk
 
 ## 小米手机安装
 
-1. 将 `app-release.apk` 传到小米手机。
-2. 在系统提示中允许“安装未知来源应用”。
-3. 安装后首次使用导出/导入功能时，按提示授权本地文件访问权限。
+1. 将 `app-release.apk` 传到手机。
+2. 打开安装包，并允许“安装未知来源应用”。
+3. 首次使用导入/导出时，按系统提示授权本地文件访问权限。
 
-## 重要说明
+## V2.0 优化记录
 
-- 导入 JSON 备份会替换当前全部账单，APP 会弹出二次确认。
-- 重置默认分类在已有账单时会被禁止，避免历史账单找不到分类。
-- 一键清空账单也会弹出二次确认，清空后不可恢复，建议先导出 JSON 备份。
+- 创建 `V2.0` 最终发行分支
+- 修复导入 JSON 备份时坏文件可能导致流程中断的问题
+- 优化数据变更刷新逻辑，新增、编辑、删除、导入、清空后相关页面自动更新
+- 精简 Android 存储权限声明，保留本地导入导出能力
+- 优化分类管理小屏幕操作区，降低按钮拥挤风险
+- 优化统计饼图图例显示，避免分类较多时布局溢出
+- 清理 Git 忽略规则，避免上传 IDE 配置、本地 SDK 路径和内存转储文件
+- 补充 Gradle wrapper 与 `pubspec.lock`，提高构建可复现性
+
+## 已知说明
+
+- 当前版本定位为个人本地使用，不包含云同步、多端同步和登录体系。
+- JSON 恢复会替换当前全部账单，操作前建议先导出现有 JSON 备份。
+- 重置默认分类在已有账单时会被禁止，这是为了保护历史账单数据关联。

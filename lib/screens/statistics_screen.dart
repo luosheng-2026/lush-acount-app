@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../data/app_database.dart';
+import '../data/data_change_notifier.dart';
 import '../models/stat_summary.dart';
 import '../utils/formatters.dart';
 
@@ -22,10 +23,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void initState() {
     super.initState();
+    DataChangeNotifier.instance.version.addListener(_load);
     _load();
   }
 
+  @override
+  void dispose() {
+    DataChangeNotifier.instance.version.removeListener(_load);
+    super.dispose();
+  }
+
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     final summary = await _db.getSummary();
     final trend = await _db.getMonthlyTrend();
@@ -224,29 +233,53 @@ class _ExpensePieChart extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              final item = data[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      color: colors[index % colors.length],
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(item.categoryName)),
-                    Text('¥${moneyText(item.amount)}'),
-                  ],
-                ),
-              );
-            },
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var index = 0; index < data.length; index++)
+                  _PieLegendItem(
+                    color: colors[index % colors.length],
+                    label: data[index].categoryName,
+                    amount: data[index].amount,
+                  ),
+              ],
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PieLegendItem extends StatelessWidget {
+  const _PieLegendItem({
+    required this.color,
+    required this.label,
+    required this.amount,
+  });
+
+  final Color color;
+  final String label;
+  final double amount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(width: 10, height: 10, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Text('¥${moneyText(amount)}'),
+        ],
+      ),
     );
   }
 }

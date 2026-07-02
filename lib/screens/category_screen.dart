@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/default_categories.dart';
 import '../data/app_database.dart';
+import '../data/data_change_notifier.dart';
 import '../models/category.dart';
 import '../utils/formatters.dart';
 
@@ -22,10 +23,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   void initState() {
     super.initState();
+    DataChangeNotifier.instance.version.addListener(_load);
     _load();
   }
 
+  @override
+  void dispose() {
+    DataChangeNotifier.instance.version.removeListener(_load);
+    super.dispose();
+  }
+
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     final parents = await _db.getCategories(type: _type, parentId: 0);
     final childrenMap = <int, List<AccountCategory>>{};
@@ -92,7 +101,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     ));
     if (!mounted) return;
     showSnack(context, id > 0 ? '已新增分类' : '新增失败');
-    if (id > 0) _load();
+    if (id > 0) DataChangeNotifier.instance.notifyChanged();
   }
 
   Future<void> _addChild(AccountCategory parent) async {
@@ -106,7 +115,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     ));
     if (!mounted) return;
     showSnack(context, id > 0 ? '已新增子类' : '新增失败');
-    if (id > 0) _load();
+    if (id > 0) DataChangeNotifier.instance.notifyChanged();
   }
 
   Future<void> _rename(AccountCategory category) async {
@@ -118,7 +127,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final success = await _db.updateCategory(category.copyWith(name: name));
     if (!mounted) return;
     showSnack(context, success ? '已保存修改' : '修改失败');
-    if (success) _load();
+    if (success) DataChangeNotifier.instance.notifyChanged();
   }
 
   Future<void> _delete(AccountCategory category) async {
@@ -134,7 +143,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final success = await _db.deleteCategory(category);
     if (!mounted) return;
     showSnack(context, success ? '已删除分类' : '删除失败：该分类可能已有账单关联');
-    if (success) _load();
+    if (success) DataChangeNotifier.instance.notifyChanged();
   }
 
   Future<void> _resetDefault() async {
@@ -147,7 +156,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final success = await _db.resetDefaultCategories();
     if (!mounted) return;
     showSnack(context, success ? '已恢复默认分类' : '重置失败：请先清空账单或保留现有分类');
-    if (success) _load();
+    if (success) DataChangeNotifier.instance.notifyChanged();
   }
 
   @override
@@ -211,24 +220,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           initiallyExpanded: true,
                           title: Text(parent.name),
                           subtitle: Text('${children.length} 个二级子类'),
-                          trailing: Wrap(
-                            spacing: 4,
-                            children: [
-                              IconButton(
-                                tooltip: '新增子类',
-                                onPressed: () => _addChild(parent),
-                                icon: const Icon(Icons.add),
-                              ),
-                              IconButton(
-                                tooltip: '修改分类',
-                                onPressed: () => _rename(parent),
-                                icon: const Icon(Icons.edit_outlined),
-                              ),
-                              IconButton(
-                                tooltip: '删除分类',
-                                onPressed: () => _delete(parent),
-                                icon: const Icon(Icons.delete_outline),
-                              ),
+                          trailing: PopupMenuButton<String>(
+                            tooltip: '分类操作',
+                            onSelected: (value) {
+                              if (value == 'add') _addChild(parent);
+                              if (value == 'edit') _rename(parent);
+                              if (value == 'delete') _delete(parent);
+                            },
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(value: 'add', child: Text('新增子类')),
+                              PopupMenuItem(value: 'edit', child: Text('修改分类')),
+                              PopupMenuItem(value: 'delete', child: Text('删除分类')),
                             ],
                           ),
                           children: children
