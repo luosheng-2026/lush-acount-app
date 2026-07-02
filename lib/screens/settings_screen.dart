@@ -117,9 +117,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('应用版本：1.0.0'),
+                    Text('应用版本：2.0.0'),
                     SizedBox(height: 8),
-                    Text('隐私说明：LUSH记账仅在手机本地保存账单数据，不上传云端，不包含任何网络请求。'),
+                    Text('隐私说明：simplibook仅在手机本地保存账单数据，不上传云端，不包含任何网络请求。'),
                   ],
                 ),
               ),

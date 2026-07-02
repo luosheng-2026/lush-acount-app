@@ -1,6 +1,6 @@
-# LUSH记账
+# simplibook
 
-LUSH记账是一款纯本地、轻量化的个人收支记账 Android APP。项目使用 Flutter 开发，账单数据保存在手机本地 SQLite 数据库中，不上传云端，也不包含任何网络请求。
+simplibook是一款纯本地、轻量化的个人收支记账 Android APP。项目使用 Flutter 开发，账单数据保存在手机本地 SQLite 数据库中，不上传云端，也不包含任何网络请求。
 
 当前发行版本：`V2.0`
 
@@ -17,7 +17,7 @@ LUSH记账是一款纯本地、轻量化的个人收支记账 Android APP。项�
 
 ## 隐私说明
 
-LUSH记账只在本机存储数据：
+simplibook只在本机存储数据：
 
 - 不注册账号
 - 不上传账单

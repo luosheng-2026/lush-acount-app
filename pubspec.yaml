@@ -1,5 +1,5 @@
-name: lush_account_app
-description: LUSH记账 - 纯本地个人收支记账APP
+name: simplibook
+description: simplibook - 纯本地个人收支记账APP
 publish_to: "none"
 version: 2.0.0+2
 

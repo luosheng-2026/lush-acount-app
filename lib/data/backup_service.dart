@@ -45,7 +45,7 @@ class BackupService {
     final directory = await _exportDirectory();
     final file = File(p.join(directory.path, 'lush_backup_${_stamp()}.json'));
     final payload = {
-      'app': 'LUSH记账',
+      'app': 'simplibook',
       'version': 1,
       'export_time': DateTime.now().toIso8601String(),
       'bills': bills.map((bill) {

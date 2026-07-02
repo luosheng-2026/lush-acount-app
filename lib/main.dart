@@ -20,7 +20,7 @@ class LushAccountApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final seed = const Color(0xFF00897B);
     return MaterialApp(
-      title: 'LUSH记账',
+      title: 'simplibook',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
       theme: ThemeData(
