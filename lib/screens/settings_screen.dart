@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/app_database.dart';
 import '../data/backup_service.dart';
+import '../data/data_change_notifier.dart';
 import '../utils/formatters.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -48,6 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final count = await _backupService.importJson();
         if (!mounted) return;
         showSnack(context, count == null ? '导入失败或已取消' : '已恢复 $count 条账单');
+        if (count != null) DataChangeNotifier.instance.notifyChanged();
       });
 
   Future<void> _clearBills() => _run(() async {
@@ -61,6 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final success = await _db.clearBills();
         if (!mounted) return;
         showSnack(context, success ? '已清空全部账单' : '清空失败');
+        if (success) DataChangeNotifier.instance.notifyChanged();
       });
 
   @override
@@ -114,9 +117,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('应用版本：1.0.0'),
+                    Text('应用版本：2.0.0'),
                     SizedBox(height: 8),
-                    Text('隐私说明：LUSH记账仅在手机本地保存账单数据，不上传云端，不包含任何网络请求。'),
+                    Text('隐私说明：simplibook仅在手机本地保存账单数据，不上传云端，不包含任何网络请求。'),
                   ],
                 ),
               ),

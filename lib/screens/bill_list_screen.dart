@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../constants/default_categories.dart';
 import '../data/app_database.dart';
+import '../data/data_change_notifier.dart';
 import '../models/bill.dart';
 import '../models/category.dart';
 import '../models/stat_summary.dart';
@@ -33,7 +34,14 @@ class _BillListScreenState extends State<BillListScreen> {
   void initState() {
     super.initState();
     _applyQuickRange(QuickRange.month, refresh: false);
+    DataChangeNotifier.instance.version.addListener(_load);
     _load();
+  }
+
+  @override
+  void dispose() {
+    DataChangeNotifier.instance.version.removeListener(_load);
+    super.dispose();
   }
 
   BillFilter get _filter => BillFilter(
@@ -68,6 +76,7 @@ class _BillListScreenState extends State<BillListScreen> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     final parentCategories = await _db.getCategories(parentId: 0);
     final bills = await _db.getBills(filter: _filter);
@@ -110,7 +119,9 @@ class _BillListScreenState extends State<BillListScreen> {
     final success = await _db.deleteBill(bill.id!);
     if (!mounted) return;
     showSnack(context, success ? '已删除账单' : '删除失败');
-    if (success) _load();
+    if (success) {
+      DataChangeNotifier.instance.notifyChanged();
+    }
   }
 
   Future<void> _showBillActions(BillView bill) async {
@@ -148,7 +159,7 @@ class _BillListScreenState extends State<BillListScreen> {
       builder: (context) => _BillEditDialog(bill: bill),
     );
     if (saved == true) {
-      _load();
+      DataChangeNotifier.instance.notifyChanged();
     }
   }
 
@@ -235,10 +246,18 @@ class _BillListScreenState extends State<BillListScreen> {
           ),
         ),
         Expanded(
-          child: _loading
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _bills.isEmpty
-                  ? const Center(child: Text('暂无账单'))
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [
+                        SizedBox(height: 160),
+                        Center(child: Text('暂无账单')),
+                      ],
+                    )
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                       itemCount: _bills.length,
@@ -268,6 +287,7 @@ class _BillListScreenState extends State<BillListScreen> {
                         );
                       },
                     ),
+          ),
         ),
       ],
     );
@@ -387,6 +407,7 @@ class _BillEditDialogState extends State<_BillEditDialog> {
     final children = selectedParent == null
         ? <AccountCategory>[]
         : await _db.getCategories(type: type, parentId: selectedParent.id);
+    if (!mounted) return;
     setState(() {
       _parents = parents;
       _selectedParent = selectedParent;
@@ -405,6 +426,7 @@ class _BillEditDialogState extends State<_BillEditDialog> {
 
   Future<void> _loadChildren(AccountCategory parent) async {
     final children = await _db.getCategories(type: _billType, parentId: parent.id);
+    if (!mounted) return;
     setState(() {
       _selectedParent = parent;
       _children = children;

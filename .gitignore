@@ -2,7 +2,12 @@
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
+.idea/
 build/
 android/.gradle/
 android/app/build/
+android/app/src/main/java/io/flutter/plugins/
+android/local.properties
+android/key.properties
+android/*.hprof
 *.iml

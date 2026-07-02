@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../constants/default_categories.dart';
 import '../data/app_database.dart';
+import '../data/data_change_notifier.dart';
 import '../models/bill.dart';
 import '../models/category.dart';
 import '../utils/formatters.dart';
@@ -48,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final children = firstParent == null
         ? <AccountCategory>[]
         : await _db.getCategories(type: _billType, parentId: firstParent.id);
+    if (!mounted) return;
     setState(() {
       _parents = parents;
       _selectedParent = firstParent;
@@ -62,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
       type: _billType,
       parentId: parent.id,
     );
+    if (!mounted) return;
     setState(() {
       _selectedParent = parent;
       _children = children;
@@ -88,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     final money = double.tryParse(_moneyController.text.trim());
     if (money == null || money <= 0) {
       showSnack(context, '请输入大于0的金额');
@@ -113,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _moneyController.clear();
       _remarkController.clear();
       setState(() => _billTime = DateTime.now());
+      DataChangeNotifier.instance.notifyChanged();
       showSnack(context, '记账成功');
     } else {
       showSnack(context, '保存失败，请稍后重试');

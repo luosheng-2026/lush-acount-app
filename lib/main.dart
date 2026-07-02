@@ -20,7 +20,7 @@ class LushAccountApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final seed = const Color(0xFF00897B);
     return MaterialApp(
-      title: 'LUSH记账',
+      title: 'simplibook',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
       theme: ThemeData(
@@ -63,7 +63,12 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: _pages[_index]),
+      body: SafeArea(
+        child: IndexedStack(
+          index: _index,
+          children: _pages,
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
